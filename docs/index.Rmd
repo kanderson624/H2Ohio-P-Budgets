@@ -1,10 +1,14 @@
 ---
-title: "index"
+title: "H2Ohio Phosphorus Budgets"
 author: "Kenneth Anderson"
 date: "2024-02-07"
 output: html_document
 ---
 
-Now lets see if this works as a way to make links! 
 
-https://kanderson624.github.io/Phosphorus-Budgets/Forder-Bridge-Phosphorus-Budgets  
+## Sites:
+Click on a site to review the nutrient budgets for that site
+
+*[FORB Budget](https://kanderson624.github.io/H2Ohio-P-Budgets/Forder-Bridge-Phosphorus-Budgets)*
+<br>
+*[SJRE Budget](https://kanderson624.github.io/H2Ohio-P-Budgets/SJRE-Phosphorus-Budgets)*
