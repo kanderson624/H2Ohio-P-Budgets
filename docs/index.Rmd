@@ -1,0 +1,10 @@
+---
+title: "index"
+author: "Kenneth Anderson"
+date: "2024-02-07"
+output: html_document
+---
+
+Now lets see if this works as a way to make links! 
+
+https://kanderson624.github.io/Phosphorus-Budgets/Forder-Bridge-Phosphorus-Budgets  
