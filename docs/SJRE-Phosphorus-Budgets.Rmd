@@ -322,11 +322,13 @@ ggplot(data=dfplots, aes(x=Month, y=Pretained, group=highlow)) +
   theme_classic()
 
 ```
+<br>
+
 ### ***ASSUMPTIONS IN BUDGET:*** 
   1. Drainage area is accurate <br>
   2. P isn't lost through groundwater<br>
   3. Baseflow P reduction = storm flow P reduction <br>
-  4. Summer P measurements represent annual averages (they don't) <br>
+  4. All water entering the wetland leaves the wetland <br>
   5. The average of inflow concentrations represents average P concentration entering the wetland   (This likely is NOT true because the amounts of water flowing through each input is different)<br>
   6. Pool B represents the whole wetland <br>
 
