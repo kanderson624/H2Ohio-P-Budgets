@@ -676,7 +676,7 @@ raindata = mutate(raindata, datetime = as.POSIXct(datetime, format = "%m/%d/%Y")
 dayrain=raindata
 # scale up to the entire drainage area
 dayrain$fullprecip=tDAm2sub*dayrain$precipaccum_in
-# convert back to meters 
+# convert back to meters cubed
 dayrain$precipm = dayrain$fullprecip * 0.0254
 # convert discharge to liters
 dayrain$precipL = dayrain$precipm * 1000

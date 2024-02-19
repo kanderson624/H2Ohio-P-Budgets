@@ -89,8 +89,15 @@ Calculate drainage area and treated drainage area using digital elevation models
 
 ```{r}
 # Drainage Area calculated by Bishwodeep using Digital Elevation Model (DEM)
-tDA = 103.32 # units = acres CHECK THIS WITH BISHWODEEP
+tDA = 103.32 # units = acres 
+# Tile drainage very rough estimates by Melanie Coulter
+tDANE = 16.8
+tDAN = 25.9
+tDANW = 38.5
 # convert tDA to m^2
+tDAm2NE=tDANE*4046.86
+tDAm2N=tDAN*4046.86
+tDAm2NW=tDANW*4046.86
 tDAm2=tDA*4046.86
 # units = m^2
 print(tDAm2)
@@ -139,7 +146,7 @@ We will assume that: $$ I_a = 0.2S$$ as a standard correction.
 CN will depend on the soil of the site. In this case it's probably around 80, fairly poorly drained (we know that the surrounding fields flood often). <br>
 ```{r}
 # Start out by calculating S (inches)
-CN=85
+CN=80
 S = (1000/CN)-10
 # Calculate I (inches)
 Ia = 0.2*S
@@ -304,14 +311,167 @@ highRemoval = sum (total23final$Premovedhigh,na.rm=T)
 print(lowRemoval)
 print(highRemoval)
 ```
+Now we can add in the sub-surface drainage that enters the wetland through the 3 tile drains: 
+First we calculate the rainfall across the three different fields that drain into the wetland.
+```{r}
+# reload our rainfall data:
+setwd("C:/Users/kande120/OneDrive - Kent State University/Phosphorus Budgets/SJRE/Data")
+raindata<-read.csv("SJREsensors.csv")
+setwd("C:/Users/kande120/OneDrive - Kent State University/Phosphorus Budgets/FORB/Data")
+raindata_wayne<-read.csv("Ftwaynerainfall.csv")
+
+# make it recognize that it's a date-time value
+raindata = mutate(raindata, datetime = as.POSIXct(datetime, format = "%Y-%m-%d %H:%M:%S"))
+dayrain_wayne = mutate(raindata_wayne, datetime = as.POSIXct(datetime, format = "%m/%d/%Y")) # rainfall data is in inches
+
+# Here we will aggregate our rainfall values (just for the sensor data, the WeatherUnderground data is already the daily sum) so we have a sum of rainfall for each day
+DF2 <- transform(raindata, Date = as.Date(datetime))
+dayrain=aggregate(precipaccum ~ Date, DF2, sum) # rainfall data is in mm
+# convert sensor data to meters 
+dayrain$precipaccum_m = dayrain$precipaccum/1000
+dayrain_wayne$precipaccum_m = dayrain_wayne$precipaccum_in * 0.0254
+
+# scale up to the drainage area for each of the three tiles in both of our datasets (this gets us meters cubed of rainfall)
+dayrain_wayne$fullprecipN=tDAm2N*dayrain_wayne$precipaccum_m
+dayrain_wayne$fullprecipNW=tDAm2NW*dayrain_wayne$precipaccum_m
+dayrain_wayne$fullprecipNE=tDAm2NE*dayrain_wayne$precipaccum_m
+dayrain$fullprecipN=tDAm2N*dayrain$precipaccum_m
+dayrain$fullprecipNW=tDAm2NW*dayrain$precipaccum_m
+dayrain$fullprecipNE=tDAm2NE*dayrain$precipaccum_m
+# convert rainfall to liters
+dayrain$precipLN = dayrain$fullprecipN * 1000
+dayrain$precipLNW = dayrain$fullprecipNW * 1000
+dayrain$precipLNE = dayrain$fullprecipNE * 1000
+dayrain_wayne$precipLN = dayrain_wayne$fullprecipN * 1000
+dayrain_wayne$precipLNW = dayrain_wayne$fullprecipNW * 1000
+dayrain_wayne$precipLNE = dayrain_wayne$fullprecipNE * 1000
+
+# Summarize the dataset by month and year
+library(lubridate)
+library(tidyverse)
+dayrain_wayne$Date=as.POSIXct(dayrain_wayne$datetime,format="%Y-%m-%d")
+dayrain$Date=as.POSIXct(dayrain$Date,format="%Y-%m-%d")
+
+# Merge everything together. There's probably a more elegant way to code this, but I don't know how to do it and merging in R is super complicated.
+# Ft Wayne data first
+monthrainftN=dayrain_wayne %>% mutate(Month=month(Date,label = T),Year=year(Date)) %>%
+  group_by(Year,Month) %>% summarise(precipLN=sum(precipLN,na.rm=T))
+monthrainftNW=dayrain_wayne %>% mutate(Month=month(Date,label = T),Year=year(Date)) %>%
+  group_by(Year,Month) %>% summarise(precipLNW=sum(precipLN,na.rm=T))
+monthrainftNE=dayrain_wayne %>% mutate(Month=month(Date,label = T),Year=year(Date)) %>%
+  group_by(Year,Month) %>% summarise(precipLNE=sum(precipLN,na.rm=T))
+monthrainft1 = merge(monthrainftN,monthrainftNW,by=c("Month","Year"),all=TRUE)
+monthrainft = merge(monthrainftNE,monthrainft1,by=c("Month","Year"),all=TRUE)
+# Now sensor data
+monthrainN=dayrain %>% mutate(Month=month(Date,label = T),Year=year(Date)) %>%
+  group_by(Year,Month) %>% summarise(precipLN=sum(precipLN,na.rm=T))
+monthrainNW=dayrain %>% mutate(Month=month(Date,label = T),Year=year(Date)) %>%
+  group_by(Year,Month) %>% summarise(precipLNW=sum(precipLN,na.rm=T))
+monthrainNE=dayrain %>% mutate(Month=month(Date,label = T),Year=year(Date)) %>%
+  group_by(Year,Month) %>% summarise(precipLNE=sum(precipLN,na.rm=T))
+monthrain1 = merge(monthrainN,monthrainNW,by=c("Month","Year"),all=TRUE)
+monthrain = merge(monthrainNE,monthrain1,by=c("Month","Year"),all=TRUE)
+
+##
+# Now we can cut out the months that we already have data for in the sensor data from the Ft. Wayne dataset
+monthrainft = subset(monthrainft, Month == "Jan" | Month == "Feb" | Month == "Mar" | Month == "Apr" | Month == "May")
+
+# now we slot in the Ft. Wayne data into our main dataset and have precipitation for the whole of 2023 for each of the 3 tile drains
+monthrainfull <- merge(monthrain,monthrainft,by=c("Month","Year","precipLN","precipLNE","precipLNW"),all=TRUE)
+
+# We expect that subsurface drainage will be ~ 31% of total runoff (Pease et al. 2018)
+monthrainfull$QLN = monthrainfull$precipLN * 0.31
+monthrainfull$QLNE = monthrainfull$precipLNE * 0.31
+monthrainfull$QLNW = monthrainfull$precipLNW * 0.31
+
+```
+Now that we have rainfall and sub-surface discharge for each tile drain in 2023 we can add in phosphorus data to predict the full retention at the site. 
+
+```{r}
+# Add in the P dataset (units here are mg/L for TP)
+setwd("C:/Users/kande120/OneDrive - Kent State University/Phosphorus Budgets/SJRE/Data")
+Pdata<-read.csv("SJRE P Budget Full inletsandoutlets.csv")
+
+# subset out event sampling 
+Pdata<- subset(Pdata, Sampling == "baseflow")
+# subset out 2023 data
+Pdata2023<- subset(Pdata, Year == 2023)
+# combine rows where there are two measurements in a single month
+Pdata2023 = Pdata2023 %>% group_by(Month) %>% summarise(across(c(X1_Inlet_N.TP, X2_Inlet_NW.TP,X3_Inlet_NE.TP,X18_Inlet_ditchExt.TP.OR.upstream17,X15_Outlet_swale, X17_Outlet_ditch.TP), mean))
+
+# merge the datasets
+total23 <- merge(monthrainfull,Pdata2023,by=c("Month"),all=TRUE)
+
+# calculate the phosphorus load entering the system for each tile drain each month: 
+total23$PinN = total23$QLN * total23$X1_Inlet_N.TP
+total23$PinNW = total23$QLNW * total23$X2_Inlet_NW.TP
+total23$PinNE = total23$QLNE * total23$X3_Inlet_NE.TP
+
+# now we can fill in the gaps with a high and low for each individual tile drain: 
+lowPconN = min(total23$X1_Inlet_N.TP,na.rm = TRUE)
+lowPconNW = min(total23$X2_Inlet_NW.TP,na.rm = TRUE)
+lowPconNE = min(total23$X3_Inlet_NE.TP,na.rm = TRUE)
+highPconN= max(total23$X1_Inlet_N.TP,na.rm = TRUE)
+highPconNW= max(total23$X2_Inlet_NW.TP,na.rm = TRUE)
+highPconNE= max(total23$X3_Inlet_NE.TP,na.rm = TRUE)
+
+# now we will fill in those months with a high and low estimate of P load and then convert to lbs:
+total23$PinNlow = ifelse(test = is.na(total23$PinN) , yes = total23$QLN * lowPconN / 453592, no = total23$PinN / 453592)
+total23$PinNWlow = ifelse(test = is.na(total23$PinNW) , yes = total23$QLNW * lowPconNW / 453592, no = total23$PinNW / 453592)
+total23$PinNElow = ifelse(test = is.na(total23$PinNE) , yes = total23$QLNE * lowPconNE / 453592, no = total23$PinNE / 453592)
+total23$PinNhigh = ifelse(test = is.na(total23$PinN) , yes = total23$QLN * highPconN / 453592, no = total23$PinN / 453592)
+total23$PinNWhigh = ifelse(test = is.na(total23$PinNW) , yes = total23$QLNW * highPconNW / 453592, no = total23$PinNW / 453592)
+total23$PinNEhigh = ifelse(test = is.na(total23$PinNE) , yes = total23$QLNE * highPconNE / 453592, no = total23$PinNE / 453592)
+
+# now we combine all those for a total load of P into the system
+total23$Pinlbslow = total23$PinNlow + total23$PinNElow + total23$PinNWlow
+total23$Pinlbshigh = total23$PinNhigh + total23$PinNEhigh + total23$PinNWhigh
+
+# calculate the average outflow TP
+total23$outflowTP <- rowMeans(total23[c('X15_Outlet_swale', 'X17_Outlet_ditch.TP')], na.rm=TRUE)
+
+# calculate the load of P leaving the system (assuming that all water in goes out)
+total23$QLtotal = total23$QLN + total23$QLNE + total23$QLNW
+total23$Poutlbs = total23$QLtotal * total23$outflowTP / 459592
+
+# first make all NaNs into NAs
+total23 <- total23 %>% mutate_all(~ifelse(is.nan(.), NA, .))
+
+# calculate % retention for each month (I'm using PinlbsHigh because it doesn't matter, we're only calculating for months with outflow data and we only have a range of values when there is no data collected)
+total23$percentP <- total23$Pinlbshigh - total23$Poutlbs / total23$Pinlbshigh
+
+# now we will apply a high and low retention value to each month where we're missing data in order to predict the P retention in those months:
+# estimate the low end of % retention
+lowPper = min(total23$percentP,na.rm = TRUE)
+# and then the high end of % retention
+highPper = max(total23$percentP,na.rm = TRUE)
+
+# Now removal of P by the wetland
+total23$Premovedhighsub=ifelse(test = is.na(total23$Poutlbs) , yes = (highPper/100)*total23$Pinlbshigh, no = total23$Pinlbshigh - total23$Poutlbs)
+total23$Premovedlowsub=ifelse(test = is.na(total23$Poutlbs) , yes = (lowPper/100)*total23$Pinlbslow, no = total23$Pinlbslow - total23$Poutlbs)
+```
+
+Now we want to compare our surface flow and sub-surface flow contributions to P retention:
+
+```{r}
+# We pare down our dataframes so they're only the high and low estimates of retention (in lbs)
+total23subsurface = total23[c("Month","Year","Premovedhighsub","Premovedlowsub")]
+total23surface = total23final[c("Month","Year","Premovedhigh","Premovedlow")]
+totalplot = merge(total23subsurface,total23surface,by=c("Month","Year"),all=TRUE)
+# Make a combined variable:
+totalplot$Premovedhightotal = totalplot$Premovedhighsub + totalplot$Premovedhigh
+totalplot$Premovedlowtotal = totalplot$Premovedlowsub + totalplot$Premovedlow
+# Now we can look at the high and low estimates of retention by the site: 
+sum(totalplot$Premovedhightotal)
+sum(totalplot$Premovedlowtotal)
+```
+
 Now lets plot it out real quick to see the annual variation: 
 ```{r}
-# lets prune our dataframe to only what we're interested in: 
-totalplot = subset(total23final, select = c(Month,Premovedlow,Premovedhigh) )
 
 # lets put our dataframe into the tall format so we can plot it more easily:
 dfplots = totalplot %>%
-    gather(highlow,Pretained, Premovedlow, Premovedhigh) 
+    gather(highlow,Pretained, Premovedlowtotal, Premovedhightotal) 
 
 # now make the plot
 
@@ -333,132 +493,3 @@ ggplot(data=dfplots, aes(x=Month, y=Pretained, group=highlow)) +
   6. Pool B represents the whole wetland <br>
 
 
-
-
-
-
-
-
-
-
-
-
-As one last thing lets make a pretty conservative estimate of the error of our budget as the difference between our highest monthly retention and our lowest as an annual average:
-```{r}
-# First we can take a look at our data: 
-total[c("Month","QL","Premoved","percentP")]
-```
-
-As you can see there's a big variation in discharge that is skewing our results. Mostly a single month accounts for the whole estimate of P retention.
-
-```{r}
-# High retention value (July; we multiply by 9 and add to the existing estimate to create an annual estimate):
-Removal_high = ((total[total$Month == "Jul", "Premoved"])*9)+Removal
-# Low retention value (June; we multiply by 9 and add to the existing estimate to create an annual estimate):
-Removal_low = ((total[total$Month == "Jun", "Premoved"])*9)+Removal
-print(Removal_high)
-print(Removal_low)
-```
-
-This estimate range is taking our 3 measured months as accurate and then assuming that the months we don't know could be either as high as July, or as low as June. 
-
-
-### Lets see how rainfall data from the closest publicly available weather station does (Ft. Wayne Indiana, 31 miles away)
-Calculate drainage area and treated drainage area as above:
-
-```{r}
-# Drainage Area calculated by Bishwodeep using Digital Elevation Model (DEM)
-tDA = 103.32
-# convert tDA to m^2
-tDAm2=tDA*4046.86
-# units = m^2
-print(tDAm2)
-```
-Then we import data on precipitation from weather underground at the Ft. Wayne weather station (51 miles away)
-
-```{r}
-setwd("C:/Users/kande120/OneDrive - Kent State University/Phosphorus Budgets/SJRE/Data")
-raindata<-read.csv("Ftwaynerainfall.csv")
-# make it recognize that it's a date-time value
-raindata = mutate(raindata, datetime = as.POSIXct(datetime, format = "%m/%d/%Y"))
-# Rename so our old code keeps working 
-dayrain=raindata
-```
-Then we calculate runoff as above.
-```{r}
-# Start out by calculating S (inches)
-CN=80
-S = (1000/CN)-10
-# Calculate I (inches)
-Ia = 0.2*S
-# don't need to convert rain to inches/day, but lets name it so our old code still works
-dayrain$precip = dayrain$precipaccum_in
-# caculate runoff (inches) for each day in the dataset
-dayrain$Q = ifelse(dayrain$precip<=Ia, 0, ((dayrain$precip-Ia)^2)/(dayrain$precip-Ia+S))
-# scale up to the entire drainage area
-dayrain$Q=tDAm2*dayrain$Q
-# convert back to meters 
-dayrain$Qm = dayrain$Q * 0.0254
-# convert discharge to liters
-dayrain$QL = dayrain$Qm * 1000
-# Sum up data to get monthly values
-library(lubridate)
-library(tidyverse)
-dayrain$Date=as.POSIXct(dayrain$datetime,format="%Y-%m-%d")
-# Summarize the dataset by month and year
-monthrain=dayrain %>% mutate(Month=month(Date,label = T),Year=year(Date)) %>%
-  group_by(Year,Month) %>% summarise(QL=sum(QL,na.rm=T))
-```
-
-Now we add in the monthly measurements of Phosphorus concentrations to calculate P loading.
-```{r}
-# Add in the P dataset (units here are mg/L for TP)
-setwd("C:/Users/kande120/OneDrive - Kent State University/Phosphorus Budgets/SJRE/Data")
-Pdata<-read.csv("SJRE P Budget Full inletsandoutlets.csv")
-# subset out event sampling 
-Pdata<- subset(Pdata, Sampling == "baseflow")
-# merge the datasets
-total_wayne <- merge(monthrain,Pdata,by=c("Month","Year"))
-#  averaging the various inflows 
-total_wayne$inflowTP <- rowMeans(total_wayne[c('X1_Inlet_N.TP', 'X2_Inlet_NW.TP','X3_Inlet_NE.TP','X18_Inlet_ditchExt.TP.OR.upstream17')], na.rm=TRUE)
-# Now calculate the average outflow TP
-total_wayne$outflowTP <- rowMeans(total_wayne[c('X15_Outlet_swale', 'X17_Outlet_ditch.TP')], na.rm=TRUE)
-# Measure the mass of P entering the wetland (units = mg P/year)
-total_wayne$Pin=total_wayne$inflowTP*total_wayne$QL
-# calculate the total_wayne mass of P exiting the wetland (units = mg P/year)
-total_wayne$Pout=total_wayne$outflowTP*total_wayne$QL
-# Convert to lbs P/year
-total_wayne$Pinlb=total_wayne$Pin/453592
-total_wayne$Poutlb=total_wayne$Pout/453592
-# calculate the amount of P removed
-total_wayne$Premoved=total_wayne$Pinlb-total_wayne$Poutlb
-Removal = sum (total_wayne$Premoved,na.rm=T)
-# This is the removal of P by pool by over the course of the 3 months included in this data
-print(Removal)
-# We can make a rough annual estimate by just multiplying by 4:
-AnnRemoval=Removal*4
-print(AnnRemoval)
-# Calculate percent removal
-total_wayne$percentP=total_wayne$Premoved/total_wayne$Pinlb
-percentRemoval = mean (total_wayne$percentP,na.rm=T)
-print(percentRemoval)
-```
-
-Now lets compare our two datasets:
-```{r}
-# First our data from out sensor network: 
-total[c("Month","QL","Premoved","percentP")]
-# Then the dataset using publicly available rainfall data from Ft. Wayne:
-total_wayne[c("Month","QL","Premoved","percentP")]
-```
-
-Then get the range in our new estimate:
-
-```{r}
-# High retention value (July; we multiply by 9 and add to the existing estimate to create an annual estimate):
-Removal_high = ((total_wayne[total_wayne$Month == "Jul", "Premoved"])*9)+Removal
-# Low retention value (June; we multiply by 9 and add to the existing estimate to create an annual estimate):
-Removal_low = ((total_wayne[total_wayne$Month == "Jun", "Premoved"])*9)+Removal
-print(Removal_high)
-print(Removal_low)
-```
