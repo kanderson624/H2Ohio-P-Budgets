@@ -259,8 +259,8 @@ print(highRemoval)
 ### ***ASSUMPTIONS IN THIS BUDGET:*** 
   1. Drainage area is accurate (it accounts for only topographic drainage area) <br>
   2. Curve number is a good choice for this site on average (we chose a higher number to better account for sub-surface drainage) <br>
-  3. All water entering the wetland leaves the wetland <br>
-  4. Phosphorus is not lost through groundwater <br>
+  3. All inflowing water leaves the wetland as surfacewater outflow <br>
+  4. Groundwater effects on water and phosphorus budgets are negligible <br>
   5. Tile drains are accounted for (they're not) <br>
   6. Nearby rainfall data is accurate for the site <br>
   7. Storm events do not change phosphorus retention dynamics <br>
@@ -397,8 +397,8 @@ print(highRemoval)
 ### ***ASSUMPTIONS IN THIS BUDGET:*** 
   1. Drainage area is accurate (it may not account for the full topographic drainage area) <br>
   2. Curve number is a good choice for this site on average (we chose a higher number to better account for sub-surface drainage) <br>
-  3. All water entering the wetland leaves the wetland <br>
-  4. Phosphorus is not lost through groundwater <br>
+  3. All inflowing water leaves the wetland as surfacewater outflow <br>
+  4. Groundwater effects on water and phosphorus budgets are negligible <br>
   5. Tile drains are accounted for (they're not) <br>
   6. Nearby rainfall data is accurate for the site <br>
   7. Storm events do not change phosphorus retention dynamics <br>
@@ -531,8 +531,8 @@ print(highRemoval)
 ### ***ASSUMPTIONS IN THIS BUDGET:*** 
   1. Drainage area is accurate (it's focused mostly on sub-surface drainage) <br>
   2. Curve number is a good choice for this site on average (we chose a higher number to better account for sub-surface drainage) <br>
-  3. All water entering the wetland leaves the wetland <br>
-  4. Phosphorus is not lost through groundwater <br>
+  3. All inflowing water leaves the wetland as surfacewater outflow <br>
+  4. Groundwater effects on water and phosphorus budgets are negligible <br>
   5. Tile drains are accounted for (they're not) <br>
   6. Nearby rainfall data is accurate for the site <br>
   7. Storm events do not change phosphorus retention dynamics <br>
@@ -768,8 +768,8 @@ print(highRemoval)
 ### ***ASSUMPTIONS IN THIS BUDGET:*** 
   1. Drainage area is accurate (maybe?) <br>
   2. Curve number is a good choice for this site on average (we chose a higher number to better account for sub-surface drainage) <br>
-  3. All water entering the wetland leaves the wetland <br>
-  4. Phosphorus is not lost through groundwater <br>
+  3. All inflowing water leaves the wetland as surfacewater outflow <br>
+  4. Groundwater effects on water and phosphorus budgets are negligible <br>
   5. Tile drains are accounted for (they're not) <br>
   6. Nearby rainfall data is accurate for the site <br>
   7. Storm events do not change phosphorus retention dynamics <br>

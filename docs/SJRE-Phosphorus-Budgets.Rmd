@@ -143,10 +143,10 @@ We will assume that: $$ I_a = 0.2S$$ as a standard correction.
 (See here https://onlinelibrary.wiley.com/doi/10.1111/j.1752-1688.2006.tb04481.x for discussion of whether that is a good correction but we're going to power through with it)
 
 
-CN will depend on the soil of the site. In this case it's probably around 80, fairly poorly drained (we know that the surrounding fields flood often). <br>
+CN will depend on the soil of the site. In this case conventional practice would place it around 80, fairly poorly drained (we know that the surrounding fields flood often). However we are going to us 75 to be further in line with NE Ohio tile drained fields Wessel et al. (2022) <br>
 ```{r}
 # Start out by calculating S (inches)
-CN=80
+CN=75
 S = (1000/CN)-10
 # Calculate I (inches)
 Ia = 0.2*S
@@ -486,10 +486,11 @@ ggplot(data=dfplots, aes(x=Month, y=Pretained, group=highlow)) +
 
 ### ***ASSUMPTIONS IN BUDGET:*** 
   1. Drainage area is accurate <br>
-  2. P isn't lost through groundwater<br>
-  3. Baseflow P reduction = storm flow P reduction <br>
-  4. All water entering the wetland leaves the wetland <br>
-  5. The average of inflow concentrations represents average P concentration entering the wetland   (This likely is NOT true because the amounts of water flowing through each input is different)<br>
-  6. Pool B represents the whole wetland <br>
+  2. All inflowing water leaves the wetland as surfacewater outflow <br>
+  3. Groundwater effects on water and phosphorus budgets are negligible <br>
+  4. Baseflow P reduction = storm flow P reduction <br>
+  5. All water entering the wetland leaves the wetland <br>
+  6. The average of inflow concentrations represents average P concentration entering the wetland   (This likely is NOT true because the amounts of water flowing through each input is different)<br>
+  7. Pool B represents the whole wetland <br>
 
 

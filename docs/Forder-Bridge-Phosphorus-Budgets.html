@@ -636,8 +636,10 @@ print(lowRemoval)</code></pre>
 area) <br></li>
 <li>Curve number is a good choice for this site on average (we chose a
 higher number to better account for sub-surface drainage) <br></li>
-<li>All water entering the wetland leaves the wetland <br></li>
-<li>Phosphorus is not lost through groundwater <br></li>
+<li>All inflowing water leaves the wetland as surfacewater outflow
+<br></li>
+<li>Groundwater effects on water and phosphorus budgets are negligible
+<br></li>
 <li>Tile drains are accounted for (they’re not) <br></li>
 <li>Nearby rainfall data is accurate for the site <br></li>
 <li>Storm events do not change phosphorus retention dynamics <br></li>
@@ -786,8 +788,10 @@ print(lowRemoval)</code></pre>
 topographic drainage area) <br></li>
 <li>Curve number is a good choice for this site on average (we chose a
 higher number to better account for sub-surface drainage) <br></li>
-<li>All water entering the wetland leaves the wetland <br></li>
-<li>Phosphorus is not lost through groundwater <br></li>
+<li>All inflowing water leaves the wetland as surfacewater outflow
+<br></li>
+<li>Groundwater effects on water and phosphorus budgets are negligible
+<br></li>
 <li>Tile drains are accounted for (they’re not) <br></li>
 <li>Nearby rainfall data is accurate for the site <br></li>
 <li>Storm events do not change phosphorus retention dynamics <br></li>
@@ -936,8 +940,10 @@ print(lowRemoval)</code></pre>
 drainage) <br></li>
 <li>Curve number is a good choice for this site on average (we chose a
 higher number to better account for sub-surface drainage) <br></li>
-<li>All water entering the wetland leaves the wetland <br></li>
-<li>Phosphorus is not lost through groundwater <br></li>
+<li>All inflowing water leaves the wetland as surfacewater outflow
+<br></li>
+<li>Groundwater effects on water and phosphorus budgets are negligible
+<br></li>
 <li>Tile drains are accounted for (they’re not) <br></li>
 <li>Nearby rainfall data is accurate for the site <br></li>
 <li>Storm events do not change phosphorus retention dynamics <br></li>
@@ -1087,7 +1093,7 @@ raindata = mutate(raindata, datetime = as.POSIXct(datetime, format = &quot;%m/%d
 dayrain=raindata
 # scale up to the entire drainage area
 dayrain$fullprecip=tDAm2sub*dayrain$precipaccum_in
-# convert back to meters 
+# convert back to meters cubed
 dayrain$precipm = dayrain$fullprecip * 0.0254
 # convert discharge to liters
 dayrain$precipL = dayrain$precipm * 1000
@@ -1194,8 +1200,10 @@ print(lowRemoval)</code></pre>
 <li>Drainage area is accurate (maybe?) <br></li>
 <li>Curve number is a good choice for this site on average (we chose a
 higher number to better account for sub-surface drainage) <br></li>
-<li>All water entering the wetland leaves the wetland <br></li>
-<li>Phosphorus is not lost through groundwater <br></li>
+<li>All inflowing water leaves the wetland as surfacewater outflow
+<br></li>
+<li>Groundwater effects on water and phosphorus budgets are negligible
+<br></li>
 <li>Tile drains are accounted for (they’re not) <br></li>
 <li>Nearby rainfall data is accurate for the site <br></li>
 <li>Storm events do not change phosphorus retention dynamics <br></li>
