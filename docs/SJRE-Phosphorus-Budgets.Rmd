@@ -438,13 +438,18 @@ total23$Poutlbs = total23$QLtotal * total23$outflowTP / 459592
 total23 <- total23 %>% mutate_all(~ifelse(is.nan(.), NA, .))
 
 # calculate % retention for each month (I'm using PinlbsHigh because it doesn't matter, we're only calculating for months with outflow data and we only have a range of values when there is no data collected)
-total23$percentP <- total23$Pinlbshigh - total23$Poutlbs / total23$Pinlbshigh
+total23$percentP <- (total23$Pinlbshigh - total23$Poutlbs) / total23$Pinlbshigh
 
 # now we will apply a high and low retention value to each month where we're missing data in order to predict the P retention in those months:
 # estimate the low end of % retention
 lowPper = min(total23$percentP,na.rm = TRUE)
 # and then the high end of % retention
 highPper = max(total23$percentP,na.rm = TRUE)
+
+
+sum(total23$Premovedlowsub)/sum(total23$Pinlbslow)
+sum(total23$Premovedhighsub)/sum(total23$Pinlbshigh)
+
 
 # Now removal of P by the wetland
 total23$Premovedhighsub=ifelse(test = is.na(total23$Poutlbs) , yes = (highPper/100)*total23$Pinlbshigh, no = total23$Pinlbshigh - total23$Poutlbs)
